@@ -131,9 +131,9 @@ export default function Home() {
 
     outputImages.forEach(({ couchName, fabricName, dataUrl }) => {
       const base64 = dataUrl.split(",")[1];
-      const safeCouch = couchName.replace(/[^a-z0-9_-]/gi, "_");
-      const safeFabric = fabricName.replace(/[^a-z0-9_-]/gi, "_");
-      const filename = `${safeCouch}__${safeFabric}.png`;
+      const safeCouch = couchName.replace(/[^a-z0-9-]/gi, "-");
+      const safeFabric = fabricName.replace(/[^a-z0-9-]/gi, "-");
+      const filename = `${safeCouch}-${safeFabric}.png`;
       zip.file(filename, base64, { base64: true });
     });
 
