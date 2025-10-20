@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
+import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
@@ -47,55 +48,55 @@ export default function Home() {
 
   const loadImage = (src: string) =>
     new Promise<HTMLImageElement>((resolve, reject) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => resolve(img);
       img.onerror = reject;
       img.src = src;
     });
 
-  const renderCombo = async (
-    couchSrc: string,
-    fabricSrc: string
-  ): Promise<string> => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return "";
+  const renderCombo = useCallback(
+    async (couchSrc: string, fabricSrc: string): Promise<string> => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "";
 
-    canvas.width = 500;
-    canvas.height = 500;
+      canvas.width = 500;
+      canvas.height = 500;
 
-    const [couchImg, fabricImg] = await Promise.all([
-      loadImage(couchSrc),
-      loadImage(fabricSrc),
-    ]);
+      const [couchImg, fabricImg] = await Promise.all([
+        loadImage(couchSrc),
+        loadImage(fabricSrc),
+      ]);
 
-    const originalWidth = couchImg.width;
-    const originalHeight = couchImg.height;
-    const aspectRatio = originalWidth / originalHeight;
+      const originalWidth = couchImg.width;
+      const originalHeight = couchImg.height;
+      const aspectRatio = originalWidth / originalHeight;
 
-    let newCouchWidth: number;
-    let newCouchHeight: number;
+      let newCouchWidth: number;
+      let newCouchHeight: number;
 
-    if (aspectRatio > 2) {
-      newCouchWidth = 500;
-      newCouchHeight = 500 / aspectRatio;
-    } else {
-      newCouchHeight = 250;
-      newCouchWidth = aspectRatio * 250;
-    }
+      if (aspectRatio > 2) {
+        newCouchWidth = 500;
+        newCouchHeight = 500 / aspectRatio;
+      } else {
+        newCouchHeight = 250;
+        newCouchWidth = aspectRatio * 250;
+      }
 
-    const couchX = (canvas.width - newCouchWidth) / 2;
-    const couchY = (250 - newCouchHeight) / 2;
+      const couchX = (canvas.width - newCouchWidth) / 2;
+      const couchY = (250 - newCouchHeight) / 2;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.drawImage(couchImg, couchX, couchY, newCouchWidth, newCouchHeight);
-    ctx.drawImage(fabricImg, 0, 250, 500, 250);
+      ctx.drawImage(couchImg, couchX, couchY, newCouchWidth, newCouchHeight);
+      ctx.drawImage(fabricImg, 0, 250, 500, 250);
 
-    return canvas.toDataURL("image/png");
-  };
+      return canvas.toDataURL("image/png");
+    },
+    [] // ✅ no dependencies, stable forever
+  );
 
   const applyFabricOverlay = useCallback(async () => {
     if (couchImages.length === 0 || fabricImages.length === 0) return;
@@ -123,7 +124,7 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  }, [couchImages, fabricImages]);
+  }, [couchImages, fabricImages, renderCombo]);
 
   const downloadAllImages = () => {
     if (outputImages.length === 0) return;
@@ -165,9 +166,12 @@ export default function Home() {
             <div className="mt-3 grid grid-cols-3 gap-2">
               {couchImages.map((img, i) => (
                 <div key={i}>
-                  <img
+                  <Image
                     src={img.url}
                     alt={`couch-${i}`}
+                    width={200}
+                    height={200}
+                    unoptimized
                     className="w-full h-24 object-cover rounded border"
                   />
                   <div className="text-xs text-gray-600 text-center mt-1">
@@ -195,9 +199,12 @@ export default function Home() {
             <div className="mt-3 grid grid-cols-3 gap-2">
               {fabricImages.map((img, i) => (
                 <div key={i}>
-                  <img
+                  <Image
                     src={img.url}
                     alt={`fabric-${i}`}
+                    width={200}
+                    height={200}
+                    unoptimized
                     className="w-full h-24 object-cover rounded border"
                   />
                   <div className="text-xs text-gray-600 text-center mt-1">
@@ -231,9 +238,12 @@ export default function Home() {
             key={i}
             className="bg-white p-3 rounded-lg shadow-md text-center"
           >
-            <img
+            <Image
               src={dataUrl}
-              alt={`${couchName}__${fabricName}`}
+              alt={`${couchName}-${fabricName}`}
+              width={300}
+              height={300}
+              unoptimized
               className="rounded-lg shadow-md w-[300px] h-[300px] border border-gray-300 object-cover"
             />
             <div className="text-sm text-gray-600 mt-2">
