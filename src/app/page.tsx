@@ -95,7 +95,7 @@ export default function Home() {
 
       return canvas.toDataURL("image/png");
     },
-    [] // ✅ no dependencies, stable forever
+    [] // no dependencies, stable forever
   );
 
   const applyFabricOverlay = useCallback(async () => {
