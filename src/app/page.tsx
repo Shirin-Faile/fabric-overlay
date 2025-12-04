@@ -185,66 +185,48 @@ export default function Home() {
     []
   );
 
-  // Curtain render function - lifestyle curtain on LEFT, fabric curtain on RIGHT
+  // Curtain render function - lifestyle curtain on LEFT, fabric on RIGHT
+  // Both images scaled to same height, placed side by side
   const renderCurtainCombo = useCallback(
     async (curtainSrc: string, fabricSrc: string): Promise<string> => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return "";
-
-      canvas.width = 800;
-      canvas.height = 500;
-
       const [curtainImg, fabricImg] = await Promise.all([
         loadImage(curtainSrc),
         loadImage(fabricSrc),
       ]);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Left side - lifestyle/room curtain image (400x500 area)
-      const leftWidth = 400;
-      const leftHeight = 500;
+      // Target height for both images
+      const targetHeight = 600;
+      
+      // Calculate dimensions maintaining aspect ratios
       const curtainAspect = curtainImg.width / curtainImg.height;
-      
-      let newCurtainWidth: number;
-      let newCurtainHeight: number;
-      
-      if (curtainAspect > leftWidth / leftHeight) {
-        newCurtainWidth = leftWidth;
-        newCurtainHeight = leftWidth / curtainAspect;
-      } else {
-        newCurtainHeight = leftHeight;
-        newCurtainWidth = leftHeight * curtainAspect;
-      }
-      
-      const curtainX = (leftWidth - newCurtainWidth) / 2;
-      const curtainY = (leftHeight - newCurtainHeight) / 2;
-      
-      ctx.drawImage(curtainImg, curtainX, curtainY, newCurtainWidth, newCurtainHeight);
-
-      // Right side - fabric curtain image (400x500 area)
-      const rightWidth = 400;
-      const rightHeight = 500;
       const fabricAspect = fabricImg.width / fabricImg.height;
       
-      let newFabricWidth: number;
-      let newFabricHeight: number;
+      const curtainWidth = Math.round(targetHeight * curtainAspect);
+      const curtainHeight = targetHeight;
       
-      if (fabricAspect > rightWidth / rightHeight) {
-        newFabricWidth = rightWidth;
-        newFabricHeight = rightWidth / fabricAspect;
-      } else {
-        newFabricHeight = rightHeight;
-        newFabricWidth = rightHeight * fabricAspect;
-      }
+      const fabricWidth = Math.round(targetHeight * fabricAspect);
+      const fabricHeight = targetHeight;
       
-      const fabricX = 400 + (rightWidth - newFabricWidth) / 2;
-      const fabricY = (rightHeight - newFabricHeight) / 2;
+      // Canvas size based on both images (no gap)
+      const canvasWidth = curtainWidth + fabricWidth;
+      const canvasHeight = targetHeight;
       
-      ctx.drawImage(fabricImg, fabricX, fabricY, newFabricWidth, newFabricHeight);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "";
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // White background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Draw curtain on left
+      ctx.drawImage(curtainImg, 0, 0, curtainWidth, curtainHeight);
+      
+      // Draw fabric on right (directly next to curtain)
+      ctx.drawImage(fabricImg, curtainWidth, 0, fabricWidth, fabricHeight);
 
       return canvas.toDataURL("image/png");
     },
