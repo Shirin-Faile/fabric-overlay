@@ -186,7 +186,7 @@ export default function Home() {
   );
 
   // Curtain render function - lifestyle curtain on LEFT, fabric on RIGHT
-  // Both images scaled to same height, placed side by side
+  // 50/50 split - both images fill their half completely (crop to fill)
   const renderCurtainCombo = useCallback(
     async (curtainSrc: string, fabricSrc: string): Promise<string> => {
       const [curtainImg, fabricImg] = await Promise.all([
@@ -194,22 +194,10 @@ export default function Home() {
         loadImage(fabricSrc),
       ]);
 
-      // Target height for both images
-      const targetHeight = 600;
-      
-      // Calculate dimensions maintaining aspect ratios
-      const curtainAspect = curtainImg.width / curtainImg.height;
-      const fabricAspect = fabricImg.width / fabricImg.height;
-      
-      const curtainWidth = Math.round(targetHeight * curtainAspect);
-      const curtainHeight = targetHeight;
-      
-      const fabricWidth = Math.round(targetHeight * fabricAspect);
-      const fabricHeight = targetHeight;
-      
-      // Canvas size based on both images (no gap)
-      const canvasWidth = curtainWidth + fabricWidth;
-      const canvasHeight = targetHeight;
+      // Fixed canvas size with 50/50 split
+      const canvasWidth = 1200;
+      const canvasHeight = 600;
+      const halfWidth = canvasWidth / 2; // 600px each
       
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -218,15 +206,40 @@ export default function Home() {
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
 
-      // White background
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+      // Helper function to draw image covering entire area (like CSS object-fit: cover)
+      const drawCover = (
+        img: HTMLImageElement, 
+        x: number, 
+        y: number, 
+        width: number, 
+        height: number
+      ) => {
+        const imgAspect = img.width / img.height;
+        const targetAspect = width / height;
+        
+        let sourceX = 0;
+        let sourceY = 0;
+        let sourceWidth = img.width;
+        let sourceHeight = img.height;
+        
+        if (imgAspect > targetAspect) {
+          // Image is wider - crop sides
+          sourceWidth = img.height * targetAspect;
+          sourceX = (img.width - sourceWidth) / 2;
+        } else {
+          // Image is taller - crop top/bottom
+          sourceHeight = img.width / targetAspect;
+          sourceY = (img.height - sourceHeight) / 2;
+        }
+        
+        ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, x, y, width, height);
+      };
 
-      // Draw curtain on left
-      ctx.drawImage(curtainImg, 0, 0, curtainWidth, curtainHeight);
+      // Draw curtain filling left half
+      drawCover(curtainImg, 0, 0, halfWidth, canvasHeight);
       
-      // Draw fabric on right (directly next to curtain)
-      ctx.drawImage(fabricImg, curtainWidth, 0, fabricWidth, fabricHeight);
+      // Draw fabric filling right half
+      drawCover(fabricImg, halfWidth, 0, halfWidth, canvasHeight);
 
       return canvas.toDataURL("image/png");
     },
